@@ -1,0 +1,100 @@
+services:
+
+##Indexer##
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:develop
+    container_name: prowlarr
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - TZ=America/Chicago
+    volumes:
+      - /home/AppData/Docker/Configs/Prowlarr:/config
+    ports:
+      - 9696:9696
+    restart: unless-stopped
+
+##Movies##
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - TZ=America/Chicago
+    volumes:
+      - /home/AppData/Docker/Configs/Radarr:/config
+      - /home/AppData/Media:/Media #optional
+      - /home/AppData/Media/Torrents:/Torrents #optional
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+
+##Tv Shows##
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - TZ=America/Chicago
+    volumes:
+      - /home/AppData/Docker/Configs/Sonarr:/config
+      - /home/AppData/Media:/Media #optional
+      - /home/AppData/Media/Torrents:/Torrents #optional
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+
+##UnPacking##
+  unpackerr:
+    image: golift/unpackerr
+    container_name: unpackerr
+    volumes:
+      # You need at least this one volume mapped so Unapckerr can find your files to extract.
+      # Make sure this matches your Starr apps; the folder mount (/downloads or /data) should be identical.
+      - /home/AppData/Media/Torrents:/Torrents
+    restart: always
+    # Get the user:group correct so unpackerr can read and write to your files.
+    user: 1001:1001
+    #user: 1000:1000
+    # What you see below are defaults for this compose. You only need to modify things specific to your environment.
+    environment:
+      - TZ=America/Chicago
+      # General config
+      - UN_DEBUG=false
+      - UN_LOG_FILE=
+      - UN_LOG_FILES=10
+      - UN_LOG_FILE_MB=10
+      - UN_INTERVAL=2m
+      - UN_START_DELAY=1m
+      - UN_RETRY_DELAY=5m
+      - UN_MAX_RETRIES=3
+      - UN_PARALLEL=1
+      - UN_FILE_MODE=0644
+      - UN_DIR_MODE=0755
+      # Sonarr Config
+      - UN_SONARR_0_URL=http://192.168.68.211:8989
+      - UN_SONARR_0_API_KEY=6ae9b1c93afc47bc9ee816f9332b8e3e
+      - UN_SONARR_0_PATHS_0=/Torrents
+      - UN_SONARR_0_PROTOCOLS=torrent
+      - UN_SONARR_0_TIMEOUT=10s
+      - UN_SONARR_0_DELETE_ORIG=false
+      - UN_SONARR_0_DELETE_DELAY=5m
+      # Radarr Config
+      - UN_RADARR_0_URL=http://192.168.68.211:7878
+      - UN_RADARR_0_API_KEY=836bcb4e3ef94476979fdeba039a9d8e
+      - UN_RADARR_0_PATHS_0=/Torrents
+      - UN_RADARR_0_PROTOCOLS=torrent
+      - UN_RADARR_0_TIMEOUT=10s
+      - UN_RADARR_0_DELETE_ORIG=false
+      - UN_RADARR_0_DELETE_DELAY=5m
+      # Folder Config
+      - UN_FOLDER_0_PATH=
+      - UN_FOLDER_0_EXTRACT_PATH=
+      - UN_FOLDER_0_DELETE_AFTER=10m
+      - UN_FOLDER_0_DELETE_ORIGINAL=false
+      - UN_FOLDER_0_DELETE_FILES=false
+      - UN_FOLDER_0_MOVE_BACK=false
+    security_opt:
+      - no-new-privileges:true
