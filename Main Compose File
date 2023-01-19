@@ -1,0 +1,207 @@
+##Compose file for all Services#
+
+#Services Order:
+
+#1. Caddy
+
+
+networks:
+  web:
+  internal:
+    external: false
+    driver: bridge
+
+
+services:
+  caddy:
+    container_name: caddy
+    image: caddy:2-alpine
+    restart: unless-stopped
+    networks:
+      - internal
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - /MainPool/AppData/Docker/Configs/Caddy/Caddyfile:/etc/caddy/Caddyfile
+      - /MainPool/AppData/Docker/Configs/Caddy/data:/data
+      - /MainPool/AppData/Docker/Configs/Caddy/config:/config
+    networks:
+      - web
+      - internal
+
+##Indexer##
+
+  prowlarr:
+    image: cr.hotio.dev/hotio/prowlarr:testing
+    container_name: prowlarr
+    networks:
+      - internal
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - UMASK=002
+      - TZ=America/Chicago
+    volumes:
+      - /MainPool/AppData/Docker/Configs/Prowlarr:/config
+    ports:
+      - 9696:9696
+    restart: unless-stopped
+
+##Movies##
+
+  radarr:
+    image: cr.hotio.dev/hotio/radarr
+    container_name: radarr
+    networks:
+      - internal
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - UMASK=002
+      - TZ=America/Chicago
+    volumes:
+      - /MainPool/AppData/Docker/Configs/Radarr:/config
+      - /MainPool/AppData/Media:/Media #optional
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+
+##Tv Shows##
+
+  sonarr:
+    image: cr.hotio.dev/hotio/sonarr
+    container_name: sonarr
+    networks:
+      - internal
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - UMASK=002
+      - TZ=America/Chicago
+    volumes:
+      - /MainPool/AppData/Docker/Configs/Sonarr:/config
+      - /MainPool/AppData/Media:/Media #optional
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+
+##Music##
+
+  lidarr:
+    container_name: lidarr
+    image: cr.hotio.dev/hotio/lidarr
+    networks:
+      - internal
+    ports:
+      - "8686:8686"
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - UMASK=002
+      - TZ=Etc/UTC
+    volumes:
+      - /MainPool/AppData/Docker/Configs/Lidarr:/config
+      - /MainPool/AppData/Media:/Media #optional 
+    restart: unless-stopped
+
+##UnPacking##
+
+  unpackerr:
+    container_name: unpackerr
+    image: cr.hotio.dev/hotio/unpackerr
+    networks:
+      - internal
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - UMASK=002
+      - TZ=Etc/UTC
+    volumes:
+      - /MainPool/AppData/Docker/Configs/Unpackerr:/config
+      - /MainPool/AppData/Media:/Media
+
+##Torrent Downloader##
+
+  qbittorrent:
+    container_name: qbittorrent
+    image: cr.hotio.dev/hotio/qbittorrent
+    networks:
+      - internal
+    ports:
+      - "8080:8080"
+      - "8118:8118"
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - UMASK=002
+      - TZ=Etc/UTC
+      - VPN_ENABLED=true
+      - VPN_LAN_NETWORK=192.168.68.0/24
+      - VPN_CONF=wg0
+      - VPN_ADDITIONAL_PORTS
+      - VPN_IP_CHECK_DELAY=5
+      - VPN_IP_CHECK_EXIT=true
+      - PRIVOXY_ENABLED=false
+    volumes:
+      - /MainPool/AppData/Docker/Configs/QBittorrent:/config
+      - /MainPool/AppData/Media/Torrents:/Media/Torrents
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv6.conf.all.disable_ipv6=1
+    restart: unless-stopped
+
+##Movie Requester##
+
+  overseerr:
+    container_name: overseerr
+    image: cr.hotio.dev/hotio/overseerr
+    networks:
+      - internal
+    ports:
+      - "5055:5055"
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - UMASK=002
+      - TZ=Etc/UTC
+    volumes:
+      - /MainPool/AppData/Docker/Configs/Overseerr:/config
+
+##Plex##
+
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    runtime: nvidia
+    networks:
+      - internal
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - NVIDIA_VISIBLE_DEVICES=all
+      - VERSION=docker
+      - PLEX_CLAIM=claim-3oTEKJnxUHjY2DZfn-iw #optional
+    volumes:
+      - /MainPool/AppData/Docker/Configs/Plex:/config
+      - /MainPool/AppData/Media/Streaming:/Streaming
+    restart: unless-stopped
+
+##Music Download##
+
+  trackarr:
+    container_name: deemix
+    image: registry.gitlab.com/bockiii/deemix-docker
+    ports:
+      - "6595:6595"
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - UMASK=002
+      - TZ=Etc/UTC
+      - DEEMIX_SINGLE_USER=TRUE
+    volumes:
+      - /MainPool/AppData/Docker/Configs/Deemix:/config
+      - /MainPool/AppData/Media/Streaming/Music:/Music
