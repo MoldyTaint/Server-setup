@@ -1,0 +1,19 @@
+services:
+  immich:
+    image: ghcr.io/imagegenius/immich:latest
+    container_name: immich
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Australia/Melbourne
+      - DB_HOSTNAME=192.168.68.211
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=CHANGETHIS
+      - DB_DATABASE_NAME=immich
+      - JWT_SECRET=CHANGETHIS
+    volumes:
+      - /MainPool/AppData/Docker/Configs/Immich:/config
+      - /MainPool/AppData/Files/Photos:/photos
+    ports:
+      - 2283:8080
+    restart: unless-stopped
