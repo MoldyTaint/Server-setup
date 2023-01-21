@@ -1,0 +1,14 @@
+services:
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: CHANGEME
+      PGDATA: /MainPool/AppData/Docker/Configs/Postgres/Database
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 5432:8080
